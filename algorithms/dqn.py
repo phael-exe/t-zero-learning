@@ -122,9 +122,14 @@ class ReplayBuffer:
         """Store one transition, overwriting the oldest one when full.
 
         """
-        # ==================== YOUR CODE HERE (Part 1a) ====================
-        raise NotImplementedError("Implement ReplayBuffer.add")
-        # ==================================================================
+        self.observations[self.pos] = obs
+        self.next_observations[self.pos] = next_obs
+        self.actions[self.pos] = action
+        self.rewards[self.pos] = reward
+        self.dones[self.pos] = done
+
+        self.pos = (self.pos + 1) % self.capacity
+        self.size = min(self.pos + 1, self.capacity)
 
     def sample(self, batch_size: int) -> Batch:
         """Sample ``batch_size`` stored transitions uniformly at random.
@@ -134,18 +139,26 @@ class ReplayBuffer:
         next_observations (B, *obs_shape), rewards (B, 1), dones (B, 1).
 
         """
-        # ==================== YOUR CODE HERE (Part 1b) ====================
-        raise NotImplementedError("Implement ReplayBuffer.sample")
-        # ==================================================================
+        indices = np.random.randint(0, self.size, size=batch_size)
+
+        return Batch(
+            observations = torch.as_tensor(self.observations[indices], device=self.device),
+            next_observations = torch.as_tensor(self.observations[indices], device=self.device),
+            actions = torch.as_tensor(self.actions[indices], device=self.device),
+            rewards = torch.as_tensor(self.rewards[indices], device=self.device),
+            dones = torch.as_tensor(self.dones[indices], device=self.device)
+        )
 
 
 def compute_td_targets(target_network, batch: Batch, gamma: float) -> torch.Tensor:
     """Compute the one-step TD target for a batch of transitions.
 
     """
-    # ===================== YOUR CODE HERE (Part 2) =====================
-    raise NotImplementedError("Implement compute_td_targets")
-    # ===================================================================
+    with torch.no_grad():
+        next_q_values = target_network(batch.next_observations)
+        max_next_q = next_q_values.max(dim=1).values
+        td_targets = batch.rewards.squeeze(1) + gamma * (1 - batch.dones.squeeze(1)) * max_next_q
+    return td_targets
 
 
 def linear_schedule(start_e: float, end_e: float, duration: int, t: int) -> float:
