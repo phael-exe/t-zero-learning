@@ -129,7 +129,6 @@ class ReplayBuffer:
         self.dones[self.pos] = done
 
         self.pos = (self.pos + 1) % self.capacity
-        self.size = min(self.pos + 1, self.capacity)
         self.size = min(self.size + 1, self.capacity)
 
     def sample(self, batch_size: int) -> Batch:
@@ -144,7 +143,6 @@ class ReplayBuffer:
 
         return Batch(
             observations = torch.as_tensor(self.observations[indices], device=self.device),
-            next_observations = torch.as_tensor(self.observations[indices], device=self.device),
             next_observations = torch.as_tensor(self.next_observations[indices], device=self.device),
             actions = torch.as_tensor(self.actions[indices], device=self.device),
             rewards = torch.as_tensor(self.rewards[indices], device=self.device),
