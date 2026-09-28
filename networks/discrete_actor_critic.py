@@ -60,10 +60,21 @@ class DiscreteActorCritic(nn.Module):
         Hint: ``torch.distributions.Categorical(logits=...)`` gives you
         ``sample()``, ``log_prob(action)`` and ``entropy()``.
         """
-        # ===================== YOUR CODE HERE (Part 3) =====================
-        raise NotImplementedError("Implement DiscreteActorCritic.get_action_and_value")
-        # ===================================================================
+        logits = self.actor(x)
+        dist = Categorical(logits=logits)
 
+        if action is None:
+            if deterministic:
+                action = torch.argmax(logits, dim=-1)
+            else:
+                action = dist.sample()
+
+        log_prob = dist.log_prob(action)
+        entropy = dist.entropy()
+        value = self.get_value(x)
+
+        return action, log_prob, entropy, value
+        
     def act(self, x, deterministic: bool = False):
         """Action selection for evaluation (uniform policy interface)."""
         action, _, _, _ = self.get_action_and_value(x, deterministic=deterministic)

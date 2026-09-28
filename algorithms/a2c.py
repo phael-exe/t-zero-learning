@@ -113,10 +113,15 @@ def compute_n_step_returns(
         (T, N) returns R_t = r_t + gamma * (1 - done_t) * R_{t+1}, with
         R_T = next_value.
     """
-    # ===================== YOUR CODE HERE (Part 1) =====================
-    raise NotImplementedError("Implement compute_n_step_returns")
-    # ===================================================================
+    T = rewards.shape[0]
+    returns = torch.zeros_like(rewards)
+    R = next_value
 
+    for t in reversed(range(T)):
+        R = rewards[t] + gamma * (1.0 - dones[t]) * R
+        returns[t] = R
+
+    return returns
 
 def compute_policy_loss(
     logprobs: torch.Tensor, returns: torch.Tensor, values: torch.Tensor, use_baseline: bool = True
@@ -131,10 +136,12 @@ def compute_policy_loss(
     Returns a scalar whose gradient *descent* performs policy gradient
     *ascent*.
     """
-    # ===================== YOUR CODE HERE (Part 2) =====================
-    raise NotImplementedError("Implement compute_policy_loss")
-    # ===================================================================
+    if use_baseline:
+        advantages = returns - values.detach()
+    else:
+        advantages = returns
 
+    return -(logprobs * advantages).mean()
 
 class A2C(Algorithm):
     """Synchronous advantage actor-critic for discrete action spaces.
