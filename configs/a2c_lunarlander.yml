@@ -1,0 +1,28 @@
+# A2C assignment config — LunarLander-v3 (Questão Extra).
+# Ambiente com 8 variáveis contínuas de estado e 4 ações discretas.
+# Recompensas de -400 a +250; resolvido quando o retorno médio >= 200.
+
+algorithm: a2c
+env_id: LunarLander-v3
+seed: 1
+cuda: false
+total_timesteps: 1000000 # 1M passos para aprender o controle fino do pouso
+num_envs: 16             # 16 atores em paralelo para ampla diversidade de trajetórias
+
+track: true              # Registra métricas no Weights & Biases
+capture_video: true      # Grava vídeo da avaliação final com a nave pousando
+save_model: true         # Salva os pesos treinados do modelo
+checkpoint_every: 0
+
+agent:
+  activation: Tanh
+  hidden_layers_size: 64
+
+a2c:
+  learning_rate: 7.0e-4
+  num_steps: 10          # Horizonte n=10 passos para antecipar trajetórias de descida
+  gamma: 0.99
+  vf_coef: 0.5
+  ent_coef: 0.01
+  max_grad_norm: 0.5
+  use_baseline: true
