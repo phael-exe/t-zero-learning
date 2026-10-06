@@ -189,10 +189,12 @@ def approx_kl_and_clipfrac(
     ``(ratio - 1) - log(ratio)`` (http://joschu.net/blog/kl-approx.html);
     ``clipfrac`` is the fraction of samples with ``|ratio - 1| > clip_coef``.
     """
-    # ===================== YOUR CODE HERE (Part 3) =====================
-    raise NotImplementedError("Implement approx_kl_and_clipfrac")
-    # ===================================================================
-
+    with torch.no_grad():
+        logratio = newlogprob - oldlogprob
+        ratio = logratio.exp()
+        approx_kl = ((ratio - 1.0) - logratio).mean()
+        clipfrac = ((ratio - 1.0).abs() > clip_coef).float().mean()
+    return approx_kl, clipfrac
 
 class PPO(Algorithm):
     """Proximal Policy Optimization for discrete action spaces.
