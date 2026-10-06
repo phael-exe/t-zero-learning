@@ -144,9 +144,21 @@ def compute_gae(
         r_t + gamma * nonterminal * V(s_{t+1}) - V(s_t)``, and ``returns =
         advantages + values`` (the critic's regression target).
     """
-    # ===================== YOUR CODE HERE (Part 1) =====================
-    raise NotImplementedError("Implement compute_gae")
-    # ===================================================================
+    T = rewards.shape[0]
+    advantages = torch.zeros_like(rewards)
+    lastgaelam = torch.zeros_like(next_value)
+    for t in reversed(range(T)):
+        if t == T - 1:
+            nextnonterminal = 1.0 - next_done
+            next_values = next_value
+        else:
+            nextnonterminal = 1.0 - dones[ t + 1]
+            next_values = values[t + 1]
+        delta = rewards[t] + gamma * nextnonterminal * next_values - values[t]
+        lastgaelam = delta + gamma * gae_lambda * nextnonterminal * lastgaelam
+        advantages[t] = lastgaelam
+    returns = advantages + values
+    return advantages, returns
 
 
 def compute_clipped_policy_loss(
