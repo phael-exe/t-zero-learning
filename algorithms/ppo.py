@@ -173,10 +173,11 @@ def compute_clipped_policy_loss(
     Returns a scalar whose gradient *descent* performs ascent on that
     objective.
     """
-    # ===================== YOUR CODE HERE (Part 2) =====================
-    raise NotImplementedError("Implement compute_clipped_policy_loss")
-    # ===================================================================
-
+    advantages = advantages.detach()
+    ratio = torch.exp(newlogprob - oldlogprob.detach())
+    surr_unclipped = ratio * advantages
+    surr_clipped = torch.clamp(ratio, 1.0 - clip_coef, 1.0 + clip_coef) * advantages
+    return -torch.min(surr_unclipped, surr_clipped).mean()
 
 def approx_kl_and_clipfrac(
     newlogprob: torch.Tensor, oldlogprob: torch.Tensor, clip_coef: float
