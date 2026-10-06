@@ -1,0 +1,67 @@
+# Apptainer/Singularity definition for t-zero + Google Research Football.
+# Mirrors docker/Dockerfile.gfootball (see that file for the rationale of every
+# flag; spike notes in docs/plans/gfootball-integration.md), except that torch
+# is the CUDA-enabled PyPI wheel: this file targets the GPU cluster.
+#
+# Build:
+#   apptainer build --fakeroot t-zero-gfootball.sif cluster/t-zero-gfootball.def
+# Run (bind the repo, CPU):
+#   apptainer exec --bind "$PWD":/t-zero --pwd /t-zero t-zero-gfootball.sif \
+#       python3 train.py --config dqn_gfootball_empty_goal
+# GPU: add `--nv`.
+
+Bootstrap: docker
+From: ubuntu:22.04
+
+%environment
+    export PYTHONUNBUFFERED=1
+    export PIP_DISABLE_PIP_VERSION_CHECK=1
+    export PYGAME_HIDE_SUPPORT_PROMPT=1
+    export MUJOCO_GL=egl
+
+%post
+    set -eux
+    export DEBIAN_FRONTEND=noninteractive
+    export PIP_ROOT_USER_ACTION=ignore
+
+    # Apptainer builds sometimes run apt with a sandbox user; force root.
+    echo 'APT::Sandbox::User "root";' > /etc/apt/apt.conf.d/no-sandbox
+
+    apt-get update && apt-get install -y --no-install-recommends \
+        git cmake build-essential python3-pip python3-dev \
+        libgl1-mesa-dev libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-gfx-dev \
+        libboost-all-dev libdirectfb-dev libst-dev mesa-utils \
+        ffmpeg libegl1 libglfw3 libglew2.2 \
+     && rm -rf /var/lib/apt/lists/*
+
+    python3 -m pip install --upgrade pip setuptools wheel psutil
+
+    # gfootball engine (C++). --no-deps: dead gym<=0.21 pin. --no-build-isolation:
+    # the build script needs psutil, and setup.py marks the extension optional so
+    # a failed build would otherwise pass silently — hence the assert.
+    git clone --depth 1 https://github.com/google-research/football.git /opt/football
+    python3 -m pip install --no-deps --no-build-isolation /opt/football
+    python3 -c "import gfootball_engine, glob, os; assert glob.glob(os.path.dirname(gfootball_engine.__file__) + '/_gameplayfootball*'), 'gfootball engine was not built'"
+    rm -rf /opt/football/third_party/gfootball_engine/CMakeFiles
+
+    # gfootball runtime deps chosen by us (gym 0.23.1: newest legacy gym whose
+    # Wrapper API still matches gfootball and that installs on modern pip).
+    python3 -m pip install "gym==0.23.1" absl-py six pygame "opencv-python-headless>=4.10"
+
+    # t-zero requirements (keep in sync with requirements.txt / requirements-dev.txt).
+    python3 -m pip install \
+        python-dotenv==1.1.1 \
+        'gymnasium[mujoco,classic-control]==1.2.0' \
+        torch==2.9.1 \
+        numpy==2.2.6 \
+        pyyaml==6.0.3 \
+        tqdm==4.67.3 \
+        wandb==0.21.1 \
+        moviepy==2.2.1 \
+        metaworld \
+        pytest==8.4.1
+
+    mkdir -p /t-zero
+
+%runscript
+    exec "$@"

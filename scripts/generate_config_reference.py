@@ -26,7 +26,7 @@ _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from core.base_config import AgentConfig, RunConfig
+from core.base_config import RunConfig
 from core.config_loader import ALGORITHMS, _import_algorithm
 
 OUTPUT = _ROOT / "docs" / "config-reference.md"
@@ -110,13 +110,6 @@ def generate() -> str:
         "in during `initialize()`; they appear in saved run `config.yml` files):",
         "",
         render_table(RunConfig, only=RUNTIME_FIELDS),
-        "",
-        "## `agent:` section",
-        "",
-        "Defined in `core/base_config.py::AgentConfig`; network architecture,",
-        "shared by every algorithm.",
-        "",
-        render_table(AgentConfig),
     ]
 
     run_level = {f.name for f in fields(RunConfig)}
@@ -129,15 +122,16 @@ def generate() -> str:
             "",
             f"## `{algo_name}:` section",
             "",
-            f"Defined in `{Path(module).relative_to(_ROOT)}::{section_cls.__name__}`.",
+            f"Defined in `{Path(module).relative_to(_ROOT)}::{section_cls.__name__}`. "
+            f"Default `network`: `{ArgsClass().network}`.",
             "",
             render_table(section_cls),
         ]
-        # Anything an Args adds beyond RunConfig + agent + its own section
+        # Anything an Args adds beyond RunConfig + its own section
         # would otherwise be silently undocumented — refuse instead.
         extra = {
             f.name for f in fields(ArgsClass)
-        } - run_level - {"agent", algo_name}
+        } - run_level - {algo_name}
         if extra:
             raise SystemExit(
                 f"{ArgsClass.__module__}.Args has undocumented top-level "

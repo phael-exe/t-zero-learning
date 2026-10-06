@@ -1,8 +1,8 @@
 # Quickstart config — PPO on Pendulum-v1. Trains in a few minutes on CPU.
 #
 # Every key maps onto a dataclass field (unknown keys fail at startup):
-#   run-level keys          -> core/base_config.py::RunConfig
-#   agent:                  -> core/base_config.py::AgentConfig
+#   run-level keys          -> core/base_config.py::RunConfig (incl. network,
+#                              network_kwargs: the network class and its constructor args)
 #   ppo_continuous_action:  -> algorithms/ppo_continuous_action.py::PPOConfig
 # Keys left out keep the dataclass defaults.
 
@@ -20,10 +20,11 @@ video_length_seconds: 8.0
 save_model: true       # write model.pt + run a final evaluation
 checkpoint_every: 25000 # rotating resume bundles (checkpoint_gs*.pt)
 
-agent:
+network: ContinuousActorCritic   # a class from networks/__init__.py
+network_kwargs:                  # passed to its constructor — see its signature
   activation: Tanh
   hidden_layers_size: 64
-  use_obs_norm: true   # running mean/var obs normalization, as in CleanRL
+  use_obs_norm: true             # running mean/var obs normalization, as in CleanRL
 
 ppo_continuous_action:
   learning_rate: 1.0e-3

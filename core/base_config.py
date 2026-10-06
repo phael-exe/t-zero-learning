@@ -4,24 +4,6 @@ from dataclasses import dataclass, field
 
 
 @dataclass
-class AgentConfig:
-    """Network architecture configuration — shared across algorithms."""
-    activation: str = "Tanh"
-    """hidden activation: attribute name on ``torch.nn`` (e.g. Tanh, ReLU, GELU, SiLU)"""
-    hidden_layers_size: int = 64
-    """width of each hidden layer in the actor and critic MLPs"""
-    use_obs_norm: bool = False
-    """opt-in running mean/var observation normalization owned by the agent
-    (stats live in the agent's state_dict). Meant for flat continuous
-    observations; requires algorithm support — the rollout loop must call
-    ``agent.update_norm`` / ``agent.normalize_obs`` (both PPO variants do;
-    see docs/adding-a-new-algorithm.md)"""
-    obs_norm_epsilon: float = 1e-8
-    """numerical-stability epsilon in the obs normalization denominator
-    (only used when ``use_obs_norm`` is true)"""
-
-
-@dataclass
 class RunConfig:
     """Run-level configuration shared by every algorithm.
 
@@ -56,6 +38,15 @@ class RunConfig:
     """when ``checkpoint_every`` > 0, keep at most this many checkpoint files (oldest deleted)"""
     special_log_every: int = 100000
     """how often (in global env steps) to do special logging (e.g., weight histograms)"""
+
+    # Network
+    network: str = ""
+    """network class the algorithm builds: a name exported from ``networks/__init__.py``
+    (e.g. 'QNetwork') or a dotted import path; each algorithm sets its own default"""
+    network_kwargs: dict = field(default_factory=dict)
+    """keyword arguments forwarded to the network constructor,
+    ``network(envs, **network_kwargs)``; see its signature for what it accepts
+    (e.g. activation, hidden_layers_size). Unset keys keep the constructor defaults"""
 
     # Environment
     env_id: str = "HalfCheetah-v4"

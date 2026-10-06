@@ -41,7 +41,8 @@ except ImportError as e:  # pragma: no cover
 
 import gymnasium as gym
 
-from networks import ContinuousActorCritic
+from core.config_loader import translate_legacy_agent_section
+from networks import ContinuousActorCritic, get_network
 from envs.custom_envs.envs_utils import episode_completions_from_vector_infos
 
 MODEL_FILE = "model.pt"
@@ -176,10 +177,8 @@ def _eval_one_task(
     task_index: int,
     env_name: str,
     task_json: dict[str, Any],
-    activation: str,
-    hidden_layers_size: int,
-    use_obs_norm: bool,
-    obs_norm_epsilon: float,
+    Model: type,
+    model_kwargs: dict[str, Any],
     device: torch.device,
     capture_video: bool,
     experiment_dir: str,
@@ -204,10 +203,7 @@ def _eval_one_task(
         ]
     )
     try:
-        agent = ContinuousActorCritic(
-            envs, activation=activation, hidden_layers_size=hidden_layers_size,
-            use_obs_norm=use_obs_norm, obs_norm_epsilon=obs_norm_epsilon,
-        ).to(device)
+        agent = Model(envs, **model_kwargs).to(device)
         agent.load_state_dict(torch.load(model_path, map_location=device))
         agent.eval()
         return _run_eval_episodes(
@@ -231,7 +227,6 @@ def evaluate_metaworld(
     model_path: str | Path,
     env_id: str,
     env_kwargs: dict[str, Any] | None,
-    activation: str,
     device: torch.device,
     experiment_dir: str,
     run_name: str,
@@ -240,12 +235,14 @@ def evaluate_metaworld(
     deterministic: bool = False,
     base_seed: int = 0,
     save_json: bool = True,
-    hidden_layers_size: int = 64,
-    use_obs_norm: bool = False,
-    obs_norm_epsilon: float = 1e-8,
+    Model: type = ContinuousActorCritic,
+    model_kwargs: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     """
     Evaluate a checkpoint trained on MT10/MT25/MT50 on every constituent task via ``Meta-World/MT1``.
+
+    The agent is rebuilt as ``Model(envs, **model_kwargs)`` — the run's
+    ``network`` class and ``network_kwargs``.
 
     Returns a summary dict, or None if *env_id* is not a vector MT benchmark.
     """
@@ -279,10 +276,8 @@ def evaluate_metaworld(
             i,
             tname,
             task_json,
-            activation=activation,
-            hidden_layers_size=hidden_layers_size,
-            use_obs_norm=use_obs_norm,
-            obs_norm_epsilon=obs_norm_epsilon,
+            Model=Model,
+            model_kwargs=dict(model_kwargs or {}),
             device=device,
             capture_video=capture_video,
             experiment_dir=experiment_dir,
@@ -390,8 +385,9 @@ def main() -> None:
             print(f"skip {run_dir}: no env_id in config", file=sys.stderr)
             continue
         env_kwargs = cfg.get("env_kwargs") or {}
-        agent_cfg = cfg.get("agent") or {}
-        act = str(agent_cfg.get("activation", cfg.get("activation", "Tanh")))
+        if "agent" not in cfg and "network_kwargs" not in cfg:  # legacy: flat top-level keys
+            cfg["agent"] = {k: cfg[k] for k in ("activation", "hidden_layers_size") if k in cfg}
+        cfg = translate_legacy_agent_section(cfg, "ContinuousActorCritic")
         seed = int(cfg.get("seed", 0))
         experiment_dir = str(run_dir.parent)
         run_name = run_dir.name
@@ -399,7 +395,6 @@ def main() -> None:
             str(model_f),
             env_id=str(env_id),
             env_kwargs=env_kwargs,
-            activation=act,
             device=device,
             experiment_dir=experiment_dir,
             run_name=run_name,
@@ -408,11 +403,8 @@ def main() -> None:
             deterministic=bool(args.deterministic),
             base_seed=seed,
             save_json=not args.no_json,
-            hidden_layers_size=int(
-                agent_cfg.get("hidden_layers_size", cfg.get("hidden_layers_size", 64))
-            ),
-            use_obs_norm=bool(agent_cfg.get("use_obs_norm", False)),
-            obs_norm_epsilon=float(agent_cfg.get("obs_norm_epsilon", 1e-8)),
+            Model=get_network(cfg.get("network") or "ContinuousActorCritic"),
+            model_kwargs=cfg.get("network_kwargs") or {},
         )
         if ev is None:
             print(

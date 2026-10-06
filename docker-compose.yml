@@ -18,3 +18,29 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+
+  # t-zero + Google Research Football (see docker/Dockerfile.gfootball).
+  # CPU-only image by default (~4 GB); starts on any machine with Docker.
+  #   docker compose run --rm gfootball python train.py --config dqn_gfootball_empty_goal
+  # GPU: build with `TORCH_INDEX_URL= docker compose build gfootball` (CUDA torch,
+  # ~14 GB) and copy the `deploy:` block from the t-zero service above.
+  # Runs as your host user so runs/ and wandb/ are not root-owned (Linux). If
+  # your uid/gid are not 1000, run `export UID GID=$(id -g)` first or put
+  # UID=... / GID=... in .env.
+  gfootball:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.gfootball
+      args:
+        TORCH_INDEX_URL: ${TORCH_INDEX_URL-https://download.pytorch.org/whl/cpu}
+    image: t-zero-gfootball:latest
+    working_dir: /t-zero
+    user: "${UID:-1000}:${GID:-1000}"
+    environment:
+      - HOME=/tmp/home   # writable home for wandb/pip when running as a non-root uid
+    volumes:
+      - .:/t-zero
+    env_file:
+      - .env
+    tty: true
+    stdin_open: true

@@ -27,9 +27,9 @@ from envs import (
     make_env,
     resolve_training_video_schedule,
 )
-from networks import ContinuousActorCritic
+from networks import get_network
 from core.checkpoint import save_checkpoint
-from core.base_config import AgentConfig, RunConfig
+from core.base_config import RunConfig
 from algorithms.base import Algorithm
 
 
@@ -71,14 +71,15 @@ class Args(RunConfig):
     """Full configuration for PPO with continuous actions.
 
     Inherits run-level fields from :class:`RunConfig` and composes
-    :class:`AgentConfig` (network architecture) and :class:`PPOConfig`
-    (algorithm hyperparameters).
+    :class:`PPOConfig` (algorithm hyperparameters); the network is
+    ``network`` + ``network_kwargs`` (see :func:`networks.get_network`).
     """
     algorithm: str = "ppo_continuous_action"
 
     # Nested configs
-    agent: AgentConfig = field(default_factory=AgentConfig)
-    """network architecture configuration"""
+    network: str = "ContinuousActorCritic"
+    """network class to build (see ``RunConfig.network``); any class with
+    the interface of ``ContinuousActorCritic`` works"""
     ppo_continuous_action: PPOConfig = field(default_factory=PPOConfig)
     """PPO hyperparameters — the field name deliberately equals the algorithm
     name, so the YAML section, saved run configs (``asdict``), and CLI
@@ -148,13 +149,7 @@ class PPO(Algorithm):
 
         assert isinstance(self.envs.single_action_space, gym.spaces.Box), "only continuous action space is supported"
 
-        self.agent = ContinuousActorCritic(
-            self.envs,
-            args.agent.activation,
-            args.agent.hidden_layers_size,
-            use_obs_norm=args.agent.use_obs_norm,
-            obs_norm_epsilon=args.agent.obs_norm_epsilon,
-        ).to(self.device)
+        self.agent = get_network(args.network)(self.envs, **args.network_kwargs).to(self.device)
         self.optimizer = optim.Adam(self.agent.parameters(), lr=args.algo.learning_rate, eps=1e-5)
 
         self.last_iteration_resume = 0

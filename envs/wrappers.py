@@ -19,8 +19,8 @@ Note that :func:`continuous_control_wrappers` is **not** env-agnostic: it is
 the input contract of the flat-vector MLP agents used by
 ``ppo_continuous_action`` (flatten, clip actions, normalize + clip rewards).
 Observation normalization deliberately does **not** live here: it is owned by
-the agent (``AgentConfig.use_obs_norm``), so its statistics are checkpointed
-with the weights — see :mod:`networks.normalization`.  A new
+the agent (``network_kwargs.use_obs_norm`` on ``ContinuousActorCritic``), so its
+statistics are checkpointed with the weights — see :mod:`networks.normalization`.  A new
 algorithm family (pixel observations / CNN encoders, discrete actions) should
 declare its own stack here, add it to :data:`WRAPPER_STACKS`, and set it as
 its ``default_wrappers`` — do not extend an existing stack with special cases.
@@ -74,7 +74,7 @@ def continuous_control_wrappers(env: gym.Env, env_id: str, gamma: float) -> gym.
         5. TransformReward — clips the normalized reward to [-10, 10]
 
     Observations are *not* clipped here: obs normalization + clipping is the
-    agent's job when ``AgentConfig.use_obs_norm`` is enabled (the clip belongs
+    agent's job when ``network_kwargs.use_obs_norm`` is enabled (the clip belongs
     after normalization, and the stats belong in the checkpoint).
     """
     _validate_continuous_control_spaces(env, env_id)

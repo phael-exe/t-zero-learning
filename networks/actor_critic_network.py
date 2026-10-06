@@ -22,6 +22,15 @@ class ContinuousActorCritic(nn.Module):
     with the weights.  The **algorithm** must drive it during rollout — call
     :meth:`update_norm` on each collected obs and act on normalized inputs
     (see docs/adding-a-new-algorithm.md).  Evaluation never updates the stats.
+
+    Constructor args (set through a config's ``network_kwargs``):
+        activation: hidden activation, an attribute name on ``torch.nn``
+            (e.g. Tanh, ReLU, GELU, SiLU).
+        hidden_layers_size: width of each hidden layer in the actor and critic MLPs.
+        use_obs_norm: opt-in running mean/var observation normalization, meant
+            for flat continuous observations; both PPO variants drive it.
+        obs_norm_epsilon: numerical-stability epsilon in the normalization
+            denominator (only used when ``use_obs_norm`` is true).
     """
 
     def __init__(

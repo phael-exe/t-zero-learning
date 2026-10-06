@@ -4,7 +4,7 @@ The reward tests use a deliberately out-of-range toy env — real envs
 rarely produce rewards ≫ 10, so passing them through the stack would not
 prove the normalize + clip pipeline is wired up.  Observations are *not*
 clipped by the stack: obs normalization/clipping is agent-side (opt-in via
-``AgentConfig.use_obs_norm`` — see tests/test_normalization.py).
+``network_kwargs.use_obs_norm`` — see tests/test_normalization.py).
 """
 from __future__ import annotations
 

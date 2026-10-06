@@ -1,0 +1,47 @@
+# PPO assignment config — LunarLander-v3, STARTING POINT.
+#
+# These are the defaults of CleanRL's ppo.py, which were tuned for
+# CartPole-v1. On LunarLander they learn, but do not solve the environment
+# (mean return >= 200). Your job (Part 4) is to change them until it does —
+# with --override or a copy of this file — and justify every change.
+#
+# Every key maps onto a dataclass field (unknown keys fail at startup):
+#   run-level keys -> core/base_config.py::RunConfig (incl. network,
+#                     network_kwargs: the network class and its constructor args)
+#   ppo:           -> algorithms/ppo.py::PPOConfig
+# Keys left out keep the dataclass defaults.
+#
+#   python train.py --config ppo_lunarlander --override ppo.update_epochs=10 seed=2
+
+algorithm: ppo
+env_id: LunarLander-v3
+seed: 1
+cuda: false             # CPU is plenty for this env
+total_timesteps: 1000000 # ~8 min on one CPU core; Part 4 allows up to 2000000
+num_envs: 4             # parallel environments -> batch = num_envs * num_steps
+
+track: true             # log metrics to Weights & Biases (set WANDB_PROJECT in .env)
+capture_video: true     # record a video during the final evaluation
+save_model: true        # write model.pt + run a final evaluation
+checkpoint_every: 0
+
+network: DiscreteActorCritic   # your network from the A2C assignment
+network_kwargs:                # passed to its constructor — see its signature
+  activation: Tanh
+  hidden_layers_size: 64
+
+ppo:
+  learning_rate: 2.5e-4
+  anneal_lr: true
+  num_steps: 128        # rollout length per env
+  gamma: 0.99
+  gae_lambda: 0.95
+  num_minibatches: 4    # minibatch = batch / num_minibatches
+  update_epochs: 4      # passes over each rollout
+  norm_adv: true
+  clip_coef: 0.2
+  clip_vloss: true
+  ent_coef: 0.01
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  target_kl: null

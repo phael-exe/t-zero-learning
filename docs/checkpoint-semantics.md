@@ -68,7 +68,7 @@ training **in the same run directory** (no new folder is created).
 Restored exactly:
 
 - agent weights and optimizer state (Adam moments, LR schedule position)
-- observation-normalization statistics (`agent.use_obs_norm`) — they are
+- observation-normalization statistics (`network_kwargs.use_obs_norm`) — they are
   buffers inside the agent's `state_dict`, so they ride along in both
   `checkpoint_gs*.pt` and `model.pt` with no special handling
 - `global_step`, iteration counter, checkpoint / logging cadence counters

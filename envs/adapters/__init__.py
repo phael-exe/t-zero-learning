@@ -50,5 +50,6 @@ from envs.adapters.base import EnvAdapter, get_adapter, register_adapter
 # Add one import line per new env adapter module.
 # ---------------------------------------------------------------------------
 from envs.adapters import metaworld  # noqa: F401
+from envs.adapters import gfootball  # noqa: F401
 
 __all__ = ["EnvAdapter", "get_adapter", "register_adapter"]

@@ -256,6 +256,25 @@ A custom `evaluate` must return
 logged to wandb as-is. See `Algorithm.evaluate` in
 [algorithms/base.py](../algorithms/base.py) for how it is dispatched.
 
+### Worked example: Google Research Football (Case 3 + Case 4)
+
+[envs/custom_envs/gfootball.py](../envs/custom_envs/gfootball.py) wraps the
+legacy-`gym` gfootball engine in a `gymnasium.Env` (Case 3): it splits `done`
+into `terminated`/`truncated` using the engine's `steps_left`, maps
+`reset(seed=...)` onto the engine's construction-time seed, and turns the slow
+software renderer on only while `RecordVideo` is asking for frames.
+[envs/custom_envs/__init__.py](../envs/custom_envs/__init__.py) registers one
+id per Football Academy scenario (`GFootball/academy_empty_goal_close-v0`, …)
+— guarded by `importlib.util.find_spec("gfootball")`, so nothing changes when
+the package is absent. [envs/adapters/gfootball.py](../envs/adapters/gfootball.py)
+is the Case 4 part: a one-liner `supports_training_video=False`.
+
+The engine is a compiled C++ dependency; use
+[docker/Dockerfile.gfootball](../docker/Dockerfile.gfootball) rather than
+installing it natively. Observations are a flat 115-vector and actions are
+`Discrete(19)`, so it runs on the `discrete_control` stack (DQN) unchanged —
+see [configs/dqn_gfootball_empty_goal.yml](../configs/dqn_gfootball_empty_goal.yml).
+
 ---
 
 ## What the framework does to your env (know before debugging)

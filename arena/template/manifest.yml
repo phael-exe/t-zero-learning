@@ -1,0 +1,7 @@
+# Submission manifest — read by arena.check / arena.match / arena.tournament.
+team: template-scripted          # unique team name (shown in tables)
+members: []                      # e.g. ["Ana Souza", "João Lima"]
+controlled_players: 1            # outfield players your agent controls, 1..4 (5_vs_5)
+deterministic: true              # false if act() samples; relaxes the probe check
+description: >
+  Hand-written baseline: run at the ball, dribble towards goal, shoot when close.

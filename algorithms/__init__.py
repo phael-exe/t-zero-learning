@@ -6,8 +6,8 @@ optimizer) and a split actor/critic optimizer variant in
 New algorithms should inherit from :class:`Algorithm`.
 """
 
-from core.base_config import AgentConfig, RunConfig
+from core.base_config import RunConfig
 from algorithms.base import Algorithm
 from algorithms.ppo_continuous_action import PPOConfig, Args, PPO
 
-__all__ = ["Algorithm", "AgentConfig", "RunConfig", "PPOConfig", "Args", "PPO"]
+__all__ = ["Algorithm", "RunConfig", "PPOConfig", "Args", "PPO"]

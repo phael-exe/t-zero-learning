@@ -35,7 +35,7 @@ def main():
         "--override",
         type=str,
         nargs="*",
-        help="Override config values (format: key=value or agent.key=value)",
+        help="Override config values (format: key=value, section.key=value or network_kwargs.key=value)",
     )
 
     cli_args = parser.parse_args()

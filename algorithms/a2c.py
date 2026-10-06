@@ -37,9 +37,9 @@ import envs.custom_envs  # noqa: F401 — Gym registration side effects
 from envs.custom_envs.envs_utils import episode_completions_from_vector_infos
 from envs import build_vector_envs, resolve_training_video_schedule
 from envs.wrappers import discrete_control_wrappers
-from networks.discrete_actor_critic import DiscreteActorCritic
+from networks import get_network
 from core.checkpoint import save_checkpoint
-from core.base_config import AgentConfig, RunConfig
+from core.base_config import RunConfig
 from algorithms.base import Algorithm
 
 
@@ -67,8 +67,8 @@ class Args(RunConfig):
     """Full configuration for A2C with discrete actions.
 
     Inherits run-level fields from :class:`RunConfig` and composes
-    :class:`AgentConfig` (network architecture) and :class:`A2CConfig`
-    (algorithm hyperparameters).
+    :class:`A2CConfig` (algorithm hyperparameters); the network is
+    ``network`` + ``network_kwargs`` (see :func:`networks.get_network`).
     """
     algorithm: str = "a2c"
     env_id: str = "CartPole-v1"
@@ -77,8 +77,9 @@ class Args(RunConfig):
     """parallel environments stepped in lockstep (A3C's actors)"""
 
     # Nested configs
-    agent: AgentConfig = field(default_factory=AgentConfig)
-    """network architecture configuration"""
+    network: str = "DiscreteActorCritic"
+    """network class to build (see ``RunConfig.network``); any class with
+    ``get_value``, ``get_action_and_value`` and ``act`` works"""
     a2c: A2CConfig = field(default_factory=A2CConfig)
     """A2C hyperparameters — the field name deliberately equals the algorithm
     name, so the YAML section, saved run configs, and CLI override paths all
@@ -194,9 +195,8 @@ class A2C(Algorithm):
 
         assert isinstance(self.envs.single_action_space, gym.spaces.Discrete), "only discrete action space is supported"
 
-        self.agent = DiscreteActorCritic(
-            self.envs, args.agent.activation, args.agent.hidden_layers_size
-        ).to(self.device)
+        Network = get_network(args.network)
+        self.agent = Network(self.envs, **args.network_kwargs).to(self.device)
         self.optimizer = optim.Adam(self.agent.parameters(), lr=args.algo.learning_rate, eps=1e-5)
 
         self.last_iteration_resume = 0
@@ -370,17 +370,6 @@ class A2C(Algorithm):
                 }
             )
         wandb.log(metrics_dict, step=self.global_step)
-
-    # ------------------------------------------------------------------
-    # Evaluation — the framework loop rebuilds the agent from these kwargs
-    # and drives it through DiscreteActorCritic.act
-    # ------------------------------------------------------------------
-
-    def eval_model_kwargs(self) -> dict:
-        return dict(
-            activation=self.args.agent.activation,
-            hidden_layers_size=self.args.agent.hidden_layers_size,
-        )
 
     # ------------------------------------------------------------------
     # Checkpoint contract — on-policy, so only network/optimizer/counters

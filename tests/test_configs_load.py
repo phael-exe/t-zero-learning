@@ -27,7 +27,7 @@ def test_config_loads(config_path):
     assert args.total_timesteps > 0
     assert isinstance(args.env_kwargs, dict)
     # Nested sections resolved to dataclasses, not left as raw dicts
-    assert not isinstance(args.agent, dict)
+    assert isinstance(args.network_kwargs, dict)
     assert not isinstance(args.algo, dict)
 
 

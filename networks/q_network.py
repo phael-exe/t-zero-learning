@@ -6,9 +6,13 @@ import torch.nn as nn
 class QNetwork(nn.Module):
     """State-action value MLP for discrete actions (CleanRL-style DQN network).
 
-    Outputs one Q-value per discrete action. Width and activation come from
-    ``AgentConfig`` like the actor-critic networks; obs normalization is not
+    Outputs one Q-value per discrete action; obs normalization is not
     supported (DQN here follows CleanRL and learns from raw observations).
+
+    Constructor args (set through a config's ``network_kwargs``):
+        activation: hidden activation, an attribute name on ``torch.nn``
+            (e.g. ReLU, Tanh, GELU, SiLU).
+        hidden_layers_size: width of each of the two hidden layers.
     """
 
     def __init__(self, envs, activation: str = "ReLU", hidden_layers_size: int = 120):

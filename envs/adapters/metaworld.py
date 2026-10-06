@@ -75,7 +75,6 @@ def _evaluate(
         model_path=model_path,
         env_id=algo.env_id,
         env_kwargs=algo.env_kwargs,
-        activation=args.agent.activation,
         device=algo.device,
         experiment_dir=algo.experiment_dir,
         run_name=algo.run_name,
@@ -84,9 +83,8 @@ def _evaluate(
         deterministic=deterministic,
         base_seed=int(args.seed),
         save_json=True,
-        hidden_layers_size=args.agent.hidden_layers_size,
-        use_obs_norm=args.agent.use_obs_norm,
-        obs_norm_epsilon=args.agent.obs_norm_epsilon,
+        Model=type(algo.agent),
+        model_kwargs=args.network_kwargs,
     )
     if result is None:
         # Not a vector benchmark (e.g. single-task MT1) — fall back to standard.
@@ -103,7 +101,7 @@ def _evaluate(
             experiment_dir=algo.experiment_dir,
             run_name=algo.run_name,
             env_kwargs=algo.env_kwargs,
-            model_kwargs=algo.eval_model_kwargs(),
+            model_kwargs=args.network_kwargs,
             deterministic=deterministic,
             wrappers=algo.wrappers,
         )

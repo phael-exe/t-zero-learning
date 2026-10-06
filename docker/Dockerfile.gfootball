@@ -1,0 +1,68 @@
+# t-zero + Google Research Football (gfootball).
+#
+# gfootball ships a C++ engine that must be compiled against SDL2/Boost, and its
+# upstream Python pins (gym<=0.21) no longer install on modern pip.  This image
+# does that work once so students only need Docker.
+#
+# Default build is CPU-only (~4 GB): the DQN baseline is a small MLP on a 115-d
+# vector and gains nothing from a GPU.
+#   docker build -f docker/Dockerfile.gfootball -t t-zero-gfootball .
+#   docker run --rm -it --user "$(id -u):$(id -g)" -e HOME=/tmp/home \
+#       -v "$PWD":/t-zero --env-file .env t-zero-gfootball \
+#       python train.py --config dqn_gfootball_empty_goal
+# (--user keeps runs/ and wandb/ owned by you on Linux; HOME gives wandb a
+# writable directory. Or simply: docker compose run --rm gfootball ...)
+#
+# GPU build (~14 GB; CUDA-enabled torch from PyPI, needs an NVIDIA driver +
+# nvidia-container-toolkit on the host, then run with `--gpus all`):
+#   docker build -f docker/Dockerfile.gfootball --build-arg TORCH_INDEX_URL= \
+#       -t t-zero-gfootball:gpu .
+#
+# Rationale for every flag: docs/plans/gfootball-integration.md ("Spike findings").
+
+FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_ROOT_USER_ACTION=ignore \
+    PYGAME_HIDE_SUPPORT_PROMPT=1
+
+RUN apt-get update && apt-get install -yq --no-install-recommends \
+    git cmake build-essential python3-pip python3-dev python-is-python3 \
+    libgl1-mesa-dev libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-gfx-dev \
+    libboost-all-dev libdirectfb-dev libst-dev mesa-utils \
+    ffmpeg libegl1 libglfw3 libglew2.2 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m pip install --upgrade pip setuptools wheel psutil
+
+# Engine build. --no-deps skips the dead gym<=0.21 pin; --no-build-isolation is
+# required because the build script imports psutil and setup.py marks the
+# extension optional (a failed build would otherwise "succeed" silently) —
+# hence the explicit assert.
+ARG GFOOTBALL_REPO=https://github.com/google-research/football.git
+ARG GFOOTBALL_REF=master
+RUN git clone --depth 1 --branch ${GFOOTBALL_REF} ${GFOOTBALL_REPO} /opt/football \
+    && python3 -m pip install --no-deps --no-build-isolation /opt/football \
+    && python3 -c "import gfootball_engine, glob, os; assert glob.glob(os.path.dirname(gfootball_engine.__file__) + '/_gameplayfootball*'), 'gfootball engine was not built'" \
+    && rm -rf /opt/football/third_party/gfootball_engine/CMakeFiles
+
+# gfootball's runtime deps, chosen by us: gym 0.23.1 is the newest legacy gym
+# whose Wrapper API still matches gfootball (0.26 breaks it) and that installs
+# on modern pip (0.21 doesn't); six is imported but missing upstream.
+RUN python3 -m pip install "gym==0.23.1" absl-py six pygame "opencv-python-headless>=4.10"
+
+# t-zero. torch is pre-installed from TORCH_INDEX_URL (CPU wheels by default) so
+# the pin in requirements.txt is already satisfied; pass an empty
+# TORCH_INDEX_URL to get PyPI's CUDA-enabled wheel instead.
+ARG TORCH_INDEX_URL=https://download.pytorch.org/whl/cpu
+COPY requirements.txt requirements-dev.txt /tmp/
+RUN if [ -n "${TORCH_INDEX_URL}" ]; then \
+        python3 -m pip install --index-url "${TORCH_INDEX_URL}" \
+            "$(grep -E '^torch==' /tmp/requirements.txt)"; \
+    fi \
+    && python3 -m pip install -r /tmp/requirements.txt -r /tmp/requirements-dev.txt
+
+ENV MUJOCO_GL=egl
+WORKDIR /t-zero
+VOLUME ["/t-zero"]

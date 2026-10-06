@@ -31,8 +31,8 @@ import envs.custom_envs  # noqa: F401 — Gym registration side effects
 from envs.custom_envs.envs_utils import episode_completions_from_vector_infos
 from envs import build_vector_envs, resolve_training_video_schedule
 from envs.wrappers import discrete_control_wrappers
-from networks import QNetwork
-from core.base_config import AgentConfig, RunConfig
+from networks import get_network
+from core.base_config import RunConfig
 from algorithms.base import Algorithm
 
 
@@ -68,16 +68,17 @@ class Args(RunConfig):
     """Full configuration for DQN with discrete actions.
 
     Inherits run-level fields from :class:`RunConfig` and composes
-    :class:`AgentConfig` (network architecture) and :class:`DQNConfig`
-    (algorithm hyperparameters).
+    :class:`DQNConfig` (algorithm hyperparameters); the network is
+    ``network`` + ``network_kwargs`` (see :func:`networks.get_network`).
     """
     algorithm: str = "dqn"
     env_id: str = "CartPole-v1"
     """the gymnasium environment id (must have a Discrete action space)"""
 
     # Nested configs
-    agent: AgentConfig = field(default_factory=lambda: AgentConfig(activation="ReLU", hidden_layers_size=120))
-    """network architecture configuration"""
+    network: str = "QNetwork"
+    """network class to build (see ``RunConfig.network``); any class with
+    Q-values from ``forward`` and a greedy ``act`` works"""
     dqn: DQNConfig = field(default_factory=DQNConfig)
     """DQN hyperparameters — the field name deliberately equals the algorithm
     name, so the YAML section, saved run configs, and CLI override paths all
@@ -229,14 +230,11 @@ class DQN(Algorithm):
 
         assert isinstance(self.envs.single_action_space, gym.spaces.Discrete), "only discrete action space is supported"
 
-        self.q_network = QNetwork(
-            self.envs, args.agent.activation, args.agent.hidden_layers_size
-        ).to(self.device)
+        Network = get_network(args.network)
+        self.q_network = Network(self.envs, **args.network_kwargs).to(self.device)
         self.agent = self.q_network  # base-class hooks (model saving) expect self.agent
         self.optimizer = optim.Adam(self.q_network.parameters(), lr=args.algo.learning_rate)
-        self.target_network = QNetwork(
-            self.envs, args.agent.activation, args.agent.hidden_layers_size
-        ).to(self.device)
+        self.target_network = Network(self.envs, **args.network_kwargs).to(self.device)
         self.target_network.load_state_dict(self.q_network.state_dict())
 
         self.rb = ReplayBuffer(
@@ -362,17 +360,6 @@ class DQN(Algorithm):
                 }
             )
         wandb.log(metrics_dict, step=self.global_step)
-
-    # ------------------------------------------------------------------
-    # Evaluation — the framework loop rebuilds the agent from these kwargs
-    # and drives it through QNetwork.act (greedy policy)
-    # ------------------------------------------------------------------
-
-    def eval_model_kwargs(self) -> dict:
-        return dict(
-            activation=self.args.agent.activation,
-            hidden_layers_size=self.args.agent.hidden_layers_size,
-        )
 
     # ------------------------------------------------------------------
     # Checkpoint contract — not supported (replay buffer is not persisted)

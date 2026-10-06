@@ -39,6 +39,11 @@ SMOKE_SETTINGS: dict[str, dict[str, Any]] = {
         "run_overrides": {"total_timesteps": 256, "num_envs": 2},
         "algo_overrides": {"num_steps": 8},
     },
+    "ppo": {
+        "env_id": "CartPole-v1",
+        "run_overrides": {"total_timesteps": 256, "num_envs": 2},
+        "algo_overrides": {"num_steps": 32, "num_minibatches": 4, "update_epochs": 2},
+    },
 }
 
 

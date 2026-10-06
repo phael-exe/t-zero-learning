@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import asdict
 
+import numpy as np
 import pytest
 import yaml
 
@@ -46,8 +47,7 @@ def saved_config(tmp_path):
     args.env_kwargs = {"target_vel": 0.5}
     args.seed = 777
     args.total_timesteps = 12345
-    args.agent.activation = "ReLU"
-    args.agent.hidden_layers_size = 128
+    args.network_kwargs = {"activation": "ReLU", "hidden_layers_size": 128}
     args.ppo_continuous_action.gamma = 0.98
     args.ppo_continuous_action.num_steps = 64
     write_run_config_yaml(str(tmp_path), "run", args)
@@ -67,7 +67,7 @@ def test_roundtrip_resolves_nested_dataclasses(saved_config):
     _, config_path = saved_config
     loaded, _ = load_config(str(config_path))
 
-    assert loaded.agent.activation == "ReLU"
+    assert loaded.network_kwargs == {"activation": "ReLU", "hidden_layers_size": 128}
     assert loaded.ppo_continuous_action.gamma == 0.98
     assert loaded.algo is loaded.ppo_continuous_action
 
@@ -97,3 +97,37 @@ def test_unknown_top_level_key_is_fatal(saved_config, capsys):
     with pytest.raises(SystemExit):
         load_config(str(config_path))
     assert "Error" in capsys.readouterr().out
+
+
+def test_legacy_agent_section_becomes_network_kwargs(tmp_path, capsys):
+    """Runs saved before ``network_kwargs`` have an ``agent:`` section holding all
+    four old fields; it loads as the algorithm's default network with the
+    arguments that network accepts (DQN never used the obs-norm fields)."""
+    legacy = tmp_path / "config.yml"
+    legacy.write_text(yaml.safe_dump({
+        "algorithm": "dqn",
+        "env_id": "CartPole-v1",
+        "agent": {"activation": "ReLU", "hidden_layers_size": 256,
+                  "use_obs_norm": False, "obs_norm_epsilon": 1e-8},
+    }))
+    loaded, _ = load_config(str(legacy))
+    assert loaded.network == "QNetwork"
+    assert loaded.network_kwargs == {"activation": "ReLU", "hidden_layers_size": 256}
+    assert "legacy 'agent:' section" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("algo_name", sorted(ALGORITHMS))
+def test_every_algorithm_default_network_builds(algo_name):
+    import gymnasium as gym
+    from types import SimpleNamespace
+
+    from networks import get_network
+
+    ArgsClass, _ = _import_algorithm(algo_name)
+    discrete = algo_name in ("dqn", "a2c", "ppo")
+    envs = SimpleNamespace(
+        single_observation_space=gym.spaces.Box(-1, 1, (4,), np.float32),
+        single_action_space=gym.spaces.Discrete(2) if discrete else gym.spaces.Box(-1, 1, (2,), np.float32),
+    )
+    args = ArgsClass()
+    get_network(args.network)(envs, **args.network_kwargs)

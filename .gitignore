@@ -220,3 +220,5 @@ algorithms/dqn_solution.py
 plots/
 
 .references/
+
+docs/plans

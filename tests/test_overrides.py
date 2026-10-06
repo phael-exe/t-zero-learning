@@ -27,9 +27,12 @@ def test_top_level_int(args):
     assert args.seed == 123
 
 
-def test_dotted_nested_agent(args):
-    apply_overrides(args, ["agent.activation=ReLU"])
-    assert args.agent.activation == "ReLU"
+def test_dotted_key_inside_dict_field(args):
+    # One network constructor arg at a time; values are parsed as YAML, and
+    # the other keys already in the dict are kept.
+    args.network_kwargs = {"activation": "Tanh"}
+    apply_overrides(args, ["network_kwargs.hidden_layers_size=128", "network_kwargs.use_obs_norm=true"])
+    assert args.network_kwargs == {"activation": "Tanh", "hidden_layers_size": 128, "use_obs_norm": True}
 
 
 def test_dotted_nested_algo_section_name(args):

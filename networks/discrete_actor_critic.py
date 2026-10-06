@@ -17,6 +17,11 @@ class DiscreteActorCritic(nn.Module):
     The actor outputs one **logit** per discrete action; the policy is
     ``Categorical(logits=...)``. The critic outputs a scalar state value.
     Observation normalization is not supported (raw observations, like DQN).
+
+    Constructor args (set through a config's ``network_kwargs``):
+        activation: hidden activation, an attribute name on ``torch.nn``
+            (e.g. Tanh, ReLU, GELU, SiLU).
+        hidden_layers_size: width of each hidden layer in the actor and critic MLPs.
     """
 
     def __init__(self, envs, activation: str = "Tanh", hidden_layers_size: int = 64):

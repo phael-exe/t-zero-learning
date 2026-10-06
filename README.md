@@ -101,6 +101,7 @@ change:
 - [docs/adding-a-new-algorithm.md](docs/adding-a-new-algorithm.md) — the `Algorithm` lifecycle and registration
 - [docs/adding-metrics.md](docs/adding-metrics.md) — logging new quantities
 - [docs/checkpoint-semantics.md](docs/checkpoint-semantics.md) — exactly what resume does and doesn't restore
+- [docs/arena.md](docs/arena.md) — GFootball arena: match setup, anchors, check / match / tournament options
 - [docs/testing.md](docs/testing.md) — what the suite guarantees and what you owe it when extending
 - [docs/t-zero-design-principles.md](docs/t-zero-design-principles.md) — design principles
 

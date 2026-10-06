@@ -1,0 +1,56 @@
+# DQN on Google Research Football — "empty goal, close" academy scenario.
+#
+# One controlled attacker starts ~0.75 of the way to an empty goal (no keeper,
+# no defenders); episode ends on goal, ball out of play, possession loss, or
+# after 400 steps. Reward = +1 per goal plus +0.1 for each of 10 zones entered
+# with the ball ("checkpoints" shaping), so an episode return of ~2.0 is a goal.
+# This is the entry-level scenario: a random policy already scores sometimes.
+# There is no opposing AI decision in it, so given the same actions every
+# episode is identical -- a greedy policy's eval episodes all score the same.
+#
+# Requires gfootball (docker/Dockerfile.gfootball). The engine runs ~250 steps/s
+# on one CPU core, so 200k steps is ~15-20 min; num_envs must be 1 for dqn.
+#
+# Every key maps onto a dataclass field (unknown keys fail at startup):
+#   run-level keys -> core/base_config.py::RunConfig (incl. network,
+#                     network_kwargs: the network class and its constructor args)
+#   dqn:           -> algorithms/dqn.py::DQNConfig
+#
+# Other scenarios / reward variants are env_kwargs overrides, e.g.:
+#   python train.py --config dqn_gfootball_empty_goal \
+#       --override env_id=GFootball/academy_run_to_score_with_keeper-v0
+#   python train.py --config dqn_gfootball_empty_goal \
+#       --override 'env_kwargs={"rewards": "scoring"}'
+
+algorithm: dqn
+env_id: GFootball/academy_empty_goal_close-v0
+env_kwargs:
+  representation: simple115v2     # flat 115-d float vector (positions, velocities, game mode, ...)
+  rewards: scoring,checkpoints    # 'scoring' for the sparse +1/-1 signal only
+seed: 1
+cuda: false             # a 115->256->256->19 MLP gains nothing from a GPU
+total_timesteps: 200000
+num_envs: 1
+
+track: true             # log metrics to Weights & Biases (set WANDB_PROJECT in .env)
+capture_video: true     # final greedy evaluation is recorded (software rendering, ~1 min per episode)
+save_model: true        # write model.pt + run a final greedy evaluation
+checkpoint_every: 0     # dqn does not support checkpoint/resume
+
+network: QNetwork      # a class from networks/__init__.py
+network_kwargs:        # passed to its constructor — see its signature
+  activation: ReLU
+  hidden_layers_size: 256
+
+dqn:
+  learning_rate: 2.5e-4
+  buffer_size: 50000
+  gamma: 0.99
+  tau: 1.0
+  target_network_frequency: 1000
+  batch_size: 128
+  start_e: 1.0
+  end_e: 0.05
+  exploration_fraction: 0.3
+  learning_starts: 5000
+  train_frequency: 4

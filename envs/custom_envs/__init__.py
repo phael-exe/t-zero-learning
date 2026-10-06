@@ -1,3 +1,5 @@
+import importlib.util
+
 from gymnasium.envs.registration import register
 register(
     id="HalfCheetahVel-v1",
@@ -29,3 +31,20 @@ register(
         "render_mode": "rgb_array",
     },
 )
+
+# Google Research Football — optional dependency (C++ engine, see
+# docker/Dockerfile.gfootball). Registered only when the package is present so
+# the rest of the framework never notices its absence.
+if importlib.util.find_spec("gfootball") is not None:
+    from envs.custom_envs.gfootball import ACADEMY_SCENARIOS, GAME_SCENARIOS
+
+    for _scenario in ACADEMY_SCENARIOS + GAME_SCENARIOS:
+        register(
+            id=f"GFootball/{_scenario}-v0",
+            entry_point="envs.custom_envs.gfootball:make_gfootball_env",
+            kwargs={
+                "scenario": _scenario,
+                "representation": "simple115v2",
+                "rewards": "scoring,checkpoints",
+            },
+        )

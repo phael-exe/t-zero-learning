@@ -18,6 +18,14 @@ preconfigured):
 docker compose run t-zero   # builds from docker/Dockerfile, mounts the repo
 ```
 
+Google Research Football (`GFootball/*` envs) needs a compiled game engine and
+has its own image (CPU-only by default, ~4 GB; GPU build documented in
+[docker/Dockerfile.gfootball](../docker/Dockerfile.gfootball)):
+
+```bash
+docker compose run --rm gfootball python train.py --config dqn_gfootball_empty_goal
+```
+
 Two environment variables matter:
 
 - `MUJOCO_GL=egl` — required for MuJoCo rendering on headless machines
@@ -76,8 +84,8 @@ Any field can be overridden from the CLI with dotted paths:
 # run-level fields
 python train.py --config ppo_pendulum --override seed=7 total_timesteps=200000
 
-# nested sections: agent.<field> and <algorithm_name>.<field>
-python train.py --config ppo_pendulum --override agent.activation=ReLU \
+# nested keys: network_kwargs.<arg> and <algorithm_name>.<field>
+python train.py --config ppo_pendulum --override network_kwargs.activation=ReLU \
     ppo_continuous_action.learning_rate=3e-4
 
 # algo. is an algorithm-agnostic alias for the algorithm's own section

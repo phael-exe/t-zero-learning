@@ -35,7 +35,7 @@ Files you will touch:
 - [core/config_loader.py](../core/config_loader.py) — one line in `ALGORITHMS`
 - [tests/helpers.py](../tests/helpers.py) — one entry in `SMOKE_SETTINGS`
 - [configs/](../configs/) — one YAML config per experiment
-- [networks/](../networks/) — only if your agent needs a new architecture
+- [networks/](../networks/) — only if your agent needs a new architecture: a new file, exported from `networks/__init__.py`, then named by `network:` in the config
 
 You should **not** need to touch `train.py`, `evaluate.py`, `core/checkpoint.py`,
 or `envs/` (unless the algorithm needs a new wrapper stack — see
@@ -78,7 +78,7 @@ Create `algorithms/my_algo.py` with two dataclasses:
 
 ```python
 from dataclasses import dataclass, field
-from core.base_config import AgentConfig, RunConfig
+from core.base_config import RunConfig
 
 
 @dataclass
@@ -94,9 +94,9 @@ class MyAlgoConfig:
 @dataclass
 class Args(RunConfig):
     algorithm: str = "my_algo"
+    network: str = "ContinuousActorCritic"
+    """network class to build (see ``RunConfig.network``)"""
 
-    agent: AgentConfig = field(default_factory=AgentConfig)
-    """network architecture configuration"""
     my_algo: MyAlgoConfig = field(default_factory=MyAlgoConfig)
     """field name == algorithm name (the one-spelling rule)"""
 
@@ -109,7 +109,14 @@ Notes:
 
 - `RunConfig` ([core/base_config.py](../core/base_config.py)) provides all
   run-level fields (`seed`, `env_id`, `env_kwargs`, `total_timesteps`,
-  `track`, `checkpoint_every`, …). Never redeclare those.
+  `track`, `checkpoint_every`, …). Never redeclare those, except to give
+  `network` your algorithm's default.
+- The network is chosen by config, not by the algorithm: `network` names a
+  class in [networks/__init__.py](../networks/__init__.py) and
+  `network_kwargs` go straight to its constructor. Any network with the
+  interface your training loop calls works. Its constructor signature
+  documents the kwargs, and evaluation and export rebuild it from the saved
+  `config.yml` the same way.
 - Give **every field a docstring** — they are the source of truth for the
   config reference documentation.
 - The `algo` property is what shared code (base class, tests, overrides)
@@ -143,6 +150,7 @@ Subclass [Algorithm](../algorithms/base.py) and follow its lifecycle:
 ```python
 from algorithms.base import Algorithm
 from envs import build_vector_envs, continuous_control_wrappers
+from networks import get_network
 
 
 class MyAlgo(Algorithm):
@@ -164,7 +172,7 @@ class MyAlgo(Algorithm):
         self._setup_logging_and_checkpoints() # config.yml, wandb, cadences
 
         # 3. Agent, optimizers, replay/rollout buffers — all on self
-        self.agent = ...
+        self.agent = get_network(args.network)(self.envs, **args.network_kwargs).to(self.device)
         self.optimizer = ...
         self.global_step = 0
 
@@ -185,7 +193,7 @@ method.
 
 ### Agent-side observation normalization is an algorithm contract
 
-`agent.use_obs_norm` (an [AgentConfig](../core/base_config.py) field) enables
+`network_kwargs.use_obs_norm` (a [ContinuousActorCritic](../networks/actor_critic_network.py) argument) enables
 a running mean/var observation normalizer that lives **inside the agent**
 ([networks/normalization.py](../networks/normalization.py)) — its statistics
 are `state_dict` buffers, so checkpoints and `model.pt` carry them
@@ -318,7 +326,7 @@ env_id: Pendulum-v1
 seed: 1
 total_timesteps: 1000000
 
-agent:
+network_kwargs:
   activation: Tanh
   hidden_layers_size: 64
 

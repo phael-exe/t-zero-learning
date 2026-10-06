@@ -3,7 +3,7 @@
 #  A2C_MODULE=algorithms.a2c_solution python -m pytest tests/test_a2c.py)
 #
 # Part 3 lives in networks/discrete_actor_critic.py; it is exercised here
-# through the DiscreteActorCritic class the algorithm module imports.
+# through the algorithm module's default network (``Args.network``).
 import importlib
 import os
 from types import SimpleNamespace
@@ -12,8 +12,10 @@ import gymnasium as gym
 import pytest
 import torch
 
+from networks import get_network
+
 a2c = importlib.import_module(os.environ.get("A2C_MODULE", "algorithms.a2c"))
-DiscreteActorCritic = a2c.DiscreteActorCritic
+DiscreteActorCritic = get_network(a2c.Args.network)
 
 
 # ------------------------------------------------------- Part 1: n-step returns

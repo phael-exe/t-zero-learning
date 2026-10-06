@@ -272,21 +272,6 @@ class Algorithm(ABC):
     # Evaluation — override for env-specific protocols
     # ------------------------------------------------------------------
 
-    def eval_model_kwargs(self) -> dict:
-        """Constructor kwargs to rebuild the agent for evaluation.
-
-        Must match how the agent was built in ``initialize()``.  The default
-        covers the actor-critic family; algorithms whose network takes a
-        different constructor signature override this.
-        """
-        args = self.args
-        return dict(
-            activation=args.agent.activation,
-            hidden_layers_size=args.agent.hidden_layers_size,
-            use_obs_norm=args.agent.use_obs_norm,
-            obs_norm_epsilon=args.agent.obs_norm_epsilon,
-        )
-
     def evaluate(self, model_path, eval_episodes=10, deterministic=False):
         """Evaluate a saved model.
 
@@ -311,7 +296,7 @@ class Algorithm(ABC):
             experiment_dir=self.experiment_dir,
             run_name=self.run_name,
             env_kwargs=self.env_kwargs,
-            model_kwargs=self.eval_model_kwargs(),
+            model_kwargs=args.network_kwargs,
             deterministic=deterministic,
             wrappers=self.wrappers,
         )
