@@ -1,0 +1,34 @@
+# PPO Tuned Candidate V2 — Fast & Aggressive (8 envs, 256 steps, gae_lambda 0.98, lr 7e-4, epochs 10)
+algorithm: ppo
+env_id: LunarLander-v3
+seed: 1
+cuda: false
+total_timesteps: 1500000
+num_envs: 8
+
+track: true
+capture_video: true
+save_model: true
+checkpoint_every: 0
+
+network: DiscreteActorCritic
+network_kwargs:
+  activation: Tanh
+  hidden_layers_size: 64
+
+ppo:
+  learning_rate: 7.0e-4
+  anneal_lr: true
+  num_steps: 256
+  gamma: 0.99
+  gae_lambda: 0.98
+  num_minibatches: 8
+  update_epochs: 10
+  norm_adv: true
+  clip_coef: 0.2
+  clip_vloss: true
+  ent_coef: 0.01
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  target_kl: null
+

@@ -221,4 +221,6 @@ plots/
 
 .references/
 
+*.pdf
+
 docs/plans
