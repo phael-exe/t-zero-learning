@@ -1,0 +1,27 @@
+# SAC sanity check — Pendulum-v1. Run it right after tests/test_sac.py passes:
+# with correct Parts 1 and 2 the final eval/mean_return should be above -200
+# (~5 min on CPU). If it isn't, the bug is in your code. (r_last100 stays much
+# lower: its 100 episodes span the whole run, random-action phase included.)
+#
+# Same keys as configs/sac_hopper.yml (CleanRL's defaults); only the env and
+# the budget differ.
+
+algorithm: sac
+env_id: Pendulum-v1
+seed: 1
+cuda: false
+total_timesteps: 20000
+num_envs: 1
+
+track: true
+capture_video: true
+save_model: true
+checkpoint_every: 0
+
+network: SACAgent
+network_kwargs:
+  activation: ReLU
+  hidden_layers_size: 256
+
+sac:
+  learning_starts: 5000

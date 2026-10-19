@@ -1,0 +1,47 @@
+# SAC assignment config — Hopper-v5, STARTING POINT.
+#
+# These are the defaults of CleanRL's sac_continuous_action.py, at a tight
+# budget of 100k env steps. They learn, slowly. Your job (Part 3) is to try
+# to make them learn more in the same budget (with --override or a copy of
+# this file), 3 seeds per config, and show whether the change beats the seed
+# spread.
+#
+# Every key maps onto a dataclass field (unknown keys fail at startup):
+#   run-level keys -> core/base_config.py::RunConfig (incl. network,
+#                     network_kwargs: the network class and its constructor args)
+#   sac:           -> algorithms/sac.py::SACConfig
+# Keys left out keep the dataclass defaults.
+#
+#   python train.py --config sac_hopper --override sac.updates_per_step=2 seed=2
+
+algorithm: sac
+env_id: Hopper-v5
+seed: 1
+cuda: false             # small networks, batch 256: CPU is fine
+total_timesteps: 100000 # the Part 3 budget; ~17 min on one CPU core with updates_per_step=1
+num_envs: 1             # SAC here supports one env
+
+track: true             # log metrics to Weights & Biases (set WANDB_PROJECT in .env)
+capture_video: true     # record a video during the final evaluation (MUJOCO_GL=egl headless)
+save_model: true        # write model.pt + run the final evaluations
+checkpoint_every: 25000 # resume bundles incl. the replay buffer (python train.py --resume <run dir>)
+
+network: SACAgent       # actor + twin Q-networks (networks/sac_agent.py)
+network_kwargs:
+  activation: ReLU
+  hidden_layers_size: 256
+
+sac:
+  buffer_size: 1000000
+  gamma: 0.99
+  tau: 0.005
+  batch_size: 256
+  learning_starts: 5000
+  policy_lr: 3.0e-4
+  q_lr: 1.0e-3
+  policy_frequency: 2
+  target_network_frequency: 1
+  alpha: 0.2            # only used with autotune: false
+  autotune: true
+  updates_per_step: 1   # not in CleanRL: gradient updates per env step
+  clipped_double_q: true # not in CleanRL: false = single Q-network (Part 4)

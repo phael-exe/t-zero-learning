@@ -29,6 +29,7 @@ ALGORITHMS: dict[str, tuple[str, str, str]] = {
     "dqn": ("algorithms.dqn", "DQN", "Args"),
     "a2c": ("algorithms.a2c", "A2C", "Args"),
     "ppo": ("algorithms.ppo", "PPO", "Args"),
+    "sac": ("algorithms.sac", "SAC", "Args"),
 }
 
 

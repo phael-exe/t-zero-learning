@@ -142,3 +142,23 @@ Defined in `algorithms/ppo_continuous_action_split_optim.py::PPOConfig`. Default
 | `vf_coef` | `float` | `0.5` | coefficient of the value function |
 | `max_grad_norm` | `float` | `0.5` | the maximum norm for the gradient clipping (applied per network) |
 | `target_kl` | `float | None` | `None` | the target KL divergence threshold |
+
+## `sac:` section
+
+Defined in `algorithms/sac.py::SACConfig`. Default `network`: `SACAgent`.
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `buffer_size` | `int` | `1000000` | the replay memory buffer size |
+| `gamma` | `float` | `0.99` | the discount factor gamma |
+| `tau` | `float` | `0.005` | target smoothing coefficient |
+| `batch_size` | `int` | `256` | the batch size of samples from the replay memory |
+| `learning_starts` | `int` | `5000` | timestep to start learning (uniform random actions before it) |
+| `policy_lr` | `float` | `0.0003` | the learning rate of the policy network optimizer |
+| `q_lr` | `float` | `0.001` | the learning rate of the Q network optimizer (also used for alpha) |
+| `policy_frequency` | `int` | `2` | the frequency of training policy (delayed), in Q updates |
+| `target_network_frequency` | `int` | `1` | the frequency of updates for the target networks, in Q updates |
+| `alpha` | `float` | `0.2` | entropy regularization coefficient (used when autotune is false) |
+| `autotune` | `bool` | `True` | automatic tuning of the entropy coefficient |
+| `updates_per_step` | `int` | `1` | gradient updates (Q, and the delayed actor) per environment step |
+| `clipped_double_q` | `bool` | `True` | use min(Q1, Q2) in the target and the actor loss; false uses Q1 alone |

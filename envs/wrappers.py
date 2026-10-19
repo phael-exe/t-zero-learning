@@ -91,6 +91,25 @@ def continuous_control_wrappers(env: gym.Env, env_id: str, gamma: float) -> gym.
     return env
 
 
+def continuous_control_raw_wrappers(env: gym.Env, env_id: str, gamma: float) -> gym.Env:
+    """Preprocessing stack for off-policy continuous-control agents (e.g. SAC).
+
+    Pipeline: FlattenObservation + RecordEpisodeStatistics. Unlike
+    :func:`continuous_control_wrappers`, rewards stay **raw** (no
+    NormalizeReward/clip): a replay buffer holds transitions from many past
+    policies, so a running reward scale would make old and new rewards
+    inconsistent, and SAC's entropy coefficient trades off against the reward
+    scale. No ClipAction either: a tanh-squashed actor is already inside the
+    bounds. *gamma* is unused.
+    """
+    _validate_continuous_control_spaces(env, env_id)
+
+    env = gym.wrappers.FlattenObservation(env)
+    if not get_adapter(env_id).skip_episode_stats:
+        env = gym.wrappers.RecordEpisodeStatistics(env)
+    return env
+
+
 def no_wrappers(env: gym.Env, env_id: str, gamma: float) -> gym.Env:
     """Apply no preprocessing at all — the agent sees the raw env.
 
@@ -132,6 +151,7 @@ def discrete_control_wrappers(env: gym.Env, env_id: str, gamma: float) -> gym.En
 # ---------------------------------------------------------------------------
 WRAPPER_STACKS = {
     "continuous_control": continuous_control_wrappers,
+    "continuous_control_raw": continuous_control_raw_wrappers,
     "discrete_control": discrete_control_wrappers,
     "none": no_wrappers,
 }

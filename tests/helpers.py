@@ -44,6 +44,11 @@ SMOKE_SETTINGS: dict[str, dict[str, Any]] = {
         "run_overrides": {"total_timesteps": 256, "num_envs": 2},
         "algo_overrides": {"num_steps": 32, "num_minibatches": 4, "update_epochs": 2},
     },
+    "sac": {
+        "env_id": "Pendulum-v1",
+        "run_overrides": {"total_timesteps": 320},
+        "algo_overrides": {"learning_starts": 100, "batch_size": 32, "buffer_size": 1000},
+    },
 }
 
 
