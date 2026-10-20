@@ -1,0 +1,32 @@
+# SAC Part 3 candidate: sac_hopper.yml with learning_starts=1000
+algorithm: sac
+env_id: Hopper-v5
+seed: 1
+cuda: false             # small networks, batch 256: CPU is fine
+total_timesteps: 100000 # the Part 3 budget; ~17 min on one CPU core with updates_per_step=1
+num_envs: 1             # SAC here supports one env
+
+track: true             # log metrics to Weights & Biases (set WANDB_PROJECT in .env)
+capture_video: true     # record a video during the final evaluation (MUJOCO_GL=egl headless)
+save_model: true        # write model.pt + run the final evaluations
+checkpoint_every: 25000 # resume bundles incl. the replay buffer (python train.py --resume <run dir>)
+
+network: SACAgent       # actor + twin Q-networks (networks/sac_agent.py)
+network_kwargs:
+  activation: ReLU
+  hidden_layers_size: 256
+
+sac:
+  buffer_size: 1000000
+  gamma: 0.99
+  tau: 0.005
+  batch_size: 256
+  learning_starts: 1000
+  policy_lr: 3.0e-4
+  q_lr: 1.0e-3
+  policy_frequency: 2
+  target_network_frequency: 1
+  alpha: 0.2            # only used with autotune: false
+  autotune: true
+  updates_per_step: 1   # not in CleanRL: gradient updates per env step
+  clipped_double_q: true # not in CleanRL: false = single Q-network (Part 4)
