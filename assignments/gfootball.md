@@ -3,7 +3,7 @@
 O projeto tem duas entregas:
 
 1. **Relatório** (PDF): como vocês modelaram o problema, o que testaram e o que
-   os dados mostram. Esta parte ainda pode receber ajustes até perto do prazo.
+   os dados mostram. 
 2. **Código**: uma pasta de submissão com o seu agente, que joga um torneio
    contra os agentes das outras equipes. O formato está fixado abaixo.
 
@@ -13,22 +13,26 @@ recompensas, vários jogadores, adversários e self-play) está em
 
 ## Entrega 1: relatório
 
-Um relatório em PDF com as seções abaixo. Sejam diretos: o relatório é
-avaliado pelo que ele demonstra, não pelo tamanho.
+Um relatório em PDF com as seções abaixo.
 
-1. **Modelagem como MDP.** Estados (qual representação de observação e por
+1. **Modelagem do MDP.** Estados (qual representação de observação e por
    quê), ações, recompensa, fim de episódio, fator de desconto. Quantos
-   jogadores vocês controlam e por quê.
-2. **O que vocês mudaram e testaram no ambiente.** Por exemplo: novas funções
-   de recompensa, treino com currículo, self-play, liga de adversários,
-   controle de vários jogadores, outras representações. Para cada item, o que
-   foi feito e como foi testado.
-3. **Pipeline de treino e arquitetura.** Algoritmo, arquitetura da rede,
-   etapas do treino (cenários, adversários, trocas entre fases). Não é preciso
-   justificar cada ajuste de hiperparâmetro; mudanças de pipeline e de
-   arquitetura, sim.
-4. **Resultados e interpretação.** O que funcionou, o que não funcionou e por
-   quê.
+   jogadores vocês controlam e por quê. Caso vocês apresentem comparações de modelagens diferentes, apresente aqui também quais são as modelagens testadas.
+2. **Pipeline de treino do agente final.** Como o agente submetido foi
+   treinado, com detalhe suficiente para que outra pessoa consiga reproduzi-lo:
+   o algoritmo, a arquitetura da rede e a sequência de fases do treino
+   (cenários, adversários, recompensas, quanto tempo cada fase durou e o que
+   determinou a passagem para a seguinte). Os hiperparâmetros podem ir em uma
+   tabela, sem necessariamente justificar cada valor.
+3. **Experimentos e resultados.** As modificações que vocês testaram ao longo
+   do projeto (recompensas, currículo, self-play, adversários, número de
+   jogadores, representação, arquitetura), inclusive as que não entraram no
+   agente final. A seção deve explicar o que levou a cada mudança, contra o que ela
+   foi comparada e o que os dados mostraram (essencialmente, por que não simplesmente usar um treino padrão do PPO?), e termina com o desempenho do
+   agente final contra baselines de dificuldade e versões anteriores dele mesmo.
+4. **Discussão.** A interpretação do conjunto: o que funcionou, o que não
+   funcionou e por quê, as limitações do agente final e o que vocês testariam
+   em seguida.
 
 Regras:
 
