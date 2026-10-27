@@ -1,0 +1,17 @@
+# Configuração base herdada por todos os experimentos.
+# Qualquer chave pode ser sobrescrita no arquivo do experimento
+# ou na linha de comando:  --set chave.subchave=valor
+
+variant: padrao          # nome da variante (vira subpasta em results/runs/<experiment>/)
+seed: 0                  # sobrescrito por --seeds no run_experiment.py
+
+evaluation:
+  eval_freq: 10000       # avaliar a cada N passos de ambiente
+  n_eval_episodes: 10    # episódios por avaliação periódica
+  n_final_episodes: 20   # episódios na avaliação final
+  deterministic: true    # política gulosa/determinística na avaliação
+  eval_seed_offset: 10000  # avaliação usa sementes disjuntas das de treino
+
+logging:
+  root_dir: results/runs
+  log_interval: 1000     # passos entre registros de métricas de treino

@@ -1,0 +1,26 @@
+base: base.yaml
+
+experiment: ppo_cartpole
+algo: ppo
+env_id: CartPole-v1
+max_episode_steps: null
+total_timesteps: 100000
+
+normalization:
+  norm_obs: true           # VecNormalize: média e desvio móveis das observações
+  norm_reward: false
+  clip_obs: 10.0
+
+hyperparameters:
+  n_envs: 8
+  n_steps: 32              # passos por ambiente em cada rollout (8 x 32 = 256)
+  batch_size: 256
+  n_epochs: 20
+  learning_rate: lin_0.001 # "lin_" = decaimento linear até zero
+  clip_range: lin_0.2
+  gamma: 0.98
+  gae_lambda: 0.8
+  ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  hidden_sizes: [64, 64]

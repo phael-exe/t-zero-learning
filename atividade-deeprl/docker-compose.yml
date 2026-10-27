@@ -1,0 +1,27 @@
+# Uso:
+#   docker compose build                      # uma vez (alguns minutos)
+#   docker compose run --rm lab               # abre um terminal dentro do container
+#   docker compose up -d tensorboard          # TensorBoard em http://localhost:6006
+#
+# A pasta do projeto é montada em /workspace: o que você edita no seu
+# computador vale imediatamente dentro do container, e os resultados
+# ficam salvos em ./results mesmo depois de o container ser removido.
+services:
+  lab:
+    build: .
+    image: rl-boas-praticas:2026
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace
+    stdin_open: true
+    tty: true
+
+  tensorboard:
+    build: .
+    image: rl-boas-praticas:2026
+    command: tensorboard --logdir results/runs --host 0.0.0.0 --port 6006
+    working_dir: /workspace
+    volumes:
+      - ./results:/workspace/results
+    ports:
+      - "6006:6006"

@@ -1,0 +1,26 @@
+base: base.yaml
+
+experiment: dqn_acrobot
+algo: dqn
+env_id: Acrobot-v1
+max_episode_steps: null    # null = padrão do ambiente (500). Experimente 200 na Parte B.
+total_timesteps: 100000
+
+hyperparameters:
+  learning_rate: 0.00063
+  gamma: 0.99
+  buffer_size: 50000
+  batch_size: 128
+  learning_starts: 1000
+  train_freq: 4              # uma atualização a cada 4 passos de ambiente
+  gradient_steps: 1
+  target_update_interval: 250
+  exploration_initial_eps: 1.0
+  exploration_final_eps: 0.05
+  exploration_fraction: 0.15   # fração do treino em que ε decai linearmente
+  hidden_sizes: [256, 256]
+  max_grad_norm: 10.0
+  double_dqn: true
+  # Parte B da atividade: false reproduz o bug clássico de tratar
+  # truncamento por tempo como estado terminal (done = terminated or truncated).
+  bootstrap_on_truncation: true
